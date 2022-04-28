@@ -9,15 +9,34 @@ UploadFile.propTypes = {
   label: PropTypes.string,
   labelForMultiple: PropTypes.string,
   multiple: PropTypes.bool,
+  previewableFileTypes: PropTypes.array,
   onChange: PropTypes.func,
-  onRejectFile: PropTypes.func
+  onRejectFile: PropTypes.func,
+  sortFunc: PropTypes.func
 }
 
 UploadFile.defaultProps = {
   maxFileSize: 1024 * 1024 * 1024 * 2,
   label: "Перетащите сюда файл или выберите его",
   labelForMultiple: "Перетащите сюда файлы или выберите их",
-  multiple: false
+  multiple: false,
+  previewableFileTypes: [
+    "image/gif",
+    "image/png",
+    "image/jpeg",
+    "image/svg+xml"
+  ],
+  sortFunc: (fileA, fileB) => {
+    if (fileA.name < fileB.name) {
+      return -1
+    }
+  
+    if (fileA.name > fileB.name) {
+      return 1
+    }
+    
+    return 0
+  }
 }
 
 function getBase64(file) {
@@ -29,26 +48,79 @@ function getBase64(file) {
   })
 }
 
-export default function UploadFile({ label, labelForMultiple, maxFileSize, multiple, onChange, onRejectFile }) {
+export default function UploadFile({
+  label,
+  labelForMultiple,
+  maxFileSize,
+  multiple,
+  previewableFileTypes,
+  onChange,
+  onRejectFile,
+  sortFunc
+}) {
   const fileInputRef = useRef(null)
-  const [ files, setFiles ] = useState([])
+  
+  const [ files, setFiles ] = useState({})
+  
+  const getFiles = () => {
+    return Object.keys(files).map(k => files[ k ]).sort((a, b) => sortFunc(a.file, b.file))
+  }
+  
+  const checkFileAlreadyExist = (fileName) => typeof files[ fileName ] !== "undefined"
+  const checkFileIsPreviewable = (type) => previewableFileTypes.some(f => type.includes(f))
+  
+  const updateFileList = (filePayload) => {
+    setFiles((prev) => {
+      return {
+        ...prev,
+        [ filePayload.file.name ]: filePayload
+      }
+    })
+  }
   
   const handleOnChange = () => {
-    /**
-     *
-     * @type {File[]}
-     */
     const fileList = Array.from(fileInputRef.current.files)
     
     for (const file of fileList) {
-      if ([ "png", "jpg", "jpeg" ].some((type) => file.type.includes(type))) {
+      if (checkFileAlreadyExist(file.name)) {
+        continue
+      }
+  
+      updateFileList({
+        file,
+        type: file.type,
+        imageUrl: null,
+        status: "OK",
+        isLoading: true
+      })
+      
+      if (checkFileIsPreviewable(file.type)) {
         getBase64(file)
-          .then(() => {
-      
+          .then((fileAsBase64) => updateFileList({
+            file,
+            type: file.type,
+            imageUrl: fileAsBase64,
+            status: "OK",
+            isLoading: false
+          }))
+          .catch((error) => {
+            onRejectFile(error)
+            updateFileList({
+              file,
+              type: file.type,
+              imageUrl: null,
+              status: "ERROR",
+              isLoading: false
+            })
           })
-          .catch()
       } else {
-      
+        updateFileList({
+          file,
+          type: file.type,
+          imageUrl: null,
+          status: "OK",
+          isLoading: false
+        })
       }
     }
   }
@@ -82,25 +154,25 @@ export default function UploadFile({ label, labelForMultiple, maxFileSize, multi
       
       <div className={style.previewFilesContainer}>
         <ul className={style.previewList}>
-          <li className={cn(style.previewListItem, style.isImage)}>
-            <img src="https://images.theconversation.com/files/443350/original/file-20220131-15-1ndq1m6.jpg?ixlib=rb-1.1.0&rect=0%2C0%2C3354%2C2464&q=45&auto=format&w=926&fit=clip" alt="" />
-            <div className={style.loading}>
-              <span>🌀</span>
-            </div>
-            <div className={style.previewFileDescription}>
-              <p>GoldMine.jpg</p>
-              <p className={style.previewFileSize}>1Мб</p>
-            </div>
-            <button className={style.previewFileDeleteButton}>❌</button>
-          </li>
-  
-          <li className={cn(style.previewListItem, style.isSimpleFile)}>
-            <div className={style.previewFileDescription}>
-              <p>GoldMine.jpg</p>
-              <p className={style.previewFileSize}>1Мб</p>
-            </div>
-            <button className={style.previewFileDeleteButton}>❌</button>
-          </li>
+          {
+            getFiles().map((filePayload) => {
+              const isPreviewable = checkFileIsPreviewable(filePayload.file.type)
+              return (
+                <li key={filePayload.file.name} className={cn(style.previewListItem, {
+                  [ style.isPreviewable ]: isPreviewable,
+                  [ style.isSimpleFile ]: !isPreviewable
+                })}>
+                  { isPreviewable && !filePayload.isLoading && <img src={ filePayload.imageUrl } /> }
+                  { filePayload.isLoading && <div className={style.loading}><span>🌀</span></div> }
+                  <div className={style.previewFileDescription}>
+                    <p>{ filePayload.file.name }</p>
+                    <p className={style.previewFileSize}>1Мб</p>
+                  </div>
+                  <button className={style.previewFileDeleteButton}>❌</button>
+                </li>
+              )
+            })
+          }
         </ul>
       </div>
     </div>
