@@ -1,0 +1,108 @@
+.root {
+
+}
+
+.dropZone {
+  width: 400px;
+  height: 200px;
+  background-color: hsl(0deg 0% 0% / 3%);
+  border: 2px dashed hsla(0, 0%, 0%, 0.3);
+  border-radius: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  text-align: center;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.dropZoneIcon {
+  font-size: 60px;
+  line-height: 1;
+  margin-bottom: 1rem;
+}
+
+.inputFileLabel,
+.maxFileDescr {
+  margin: 0;
+  font-size: 0.9em;
+}
+
+.maxFileDescr {
+  color: #919191;
+}
+
+.dropZoneDescription {
+
+}
+
+.previewFilesContainer {
+
+}
+
+.previewList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.previewListItem {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid #ccc;
+  overflow: hidden;
+  align-items: center;
+  padding: 0 0.5rem;
+  border-radius: 10px;
+}
+
+.previewListItem:not(:last-child) {
+  margin-bottom: 0.5rem;
+}
+
+.previewFileDescription {
+  flex-grow: 1;
+}
+
+.previewFileDescription p {
+  margin: 0;
+}
+
+.previewFileSize {
+  color: #a6a6a6;
+  font-size: 0.9em;
+}
+
+.previewFileDeleteButton {
+  background-color: #ff000036;
+  border: none;
+  padding: 0.5rem;
+  text-align: center;
+  border-radius: 50%;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.previewListItem.isSimpleFile {
+  padding: 0.5rem;
+}
+
+.previewListItem.isImage {
+
+}
+
+.previewListItem.isImage img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  margin-left: -0.5rem;
+}
+
+.inputFileInstance {
+  visibility: hidden;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
