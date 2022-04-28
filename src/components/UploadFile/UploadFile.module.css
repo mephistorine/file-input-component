@@ -106,3 +106,30 @@
   height: 0;
   opacity: 0;
 }
+
+.loading {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  margin-left: -0.5rem;
+  font-size: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+}
+
+.loading span {
+  animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  from {
+    transform: rotate(0);
+  }
+
+
+  to {
+    transform: rotate(-1turn);
+  }
+}

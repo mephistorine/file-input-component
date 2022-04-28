@@ -20,13 +20,37 @@ UploadFile.defaultProps = {
   multiple: false
 }
 
+function getBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.addEventListener("load", (event) => resolve(event.target.result))
+    reader.addEventListener("error", (error) => reject(error))
+    reader.readAsDataURL(file)
+  })
+}
+
 export default function UploadFile({ label, labelForMultiple, maxFileSize, multiple, onChange, onRejectFile }) {
   const fileInputRef = useRef(null)
   const [ files, setFiles ] = useState([])
   
   const handleOnChange = () => {
+    /**
+     *
+     * @type {File[]}
+     */
     const fileList = Array.from(fileInputRef.current.files)
-    setFiles(fileList)
+    
+    for (const file of fileList) {
+      if ([ "png", "jpg", "jpeg" ].some((type) => file.type.includes(type))) {
+        getBase64(file)
+          .then(() => {
+      
+          })
+          .catch()
+      } else {
+      
+      }
+    }
   }
   
   const handleDragOver = ({ nativeEvent }) => nativeEvent.preventDefault()
@@ -60,6 +84,9 @@ export default function UploadFile({ label, labelForMultiple, maxFileSize, multi
         <ul className={style.previewList}>
           <li className={cn(style.previewListItem, style.isImage)}>
             <img src="https://images.theconversation.com/files/443350/original/file-20220131-15-1ndq1m6.jpg?ixlib=rb-1.1.0&rect=0%2C0%2C3354%2C2464&q=45&auto=format&w=926&fit=clip" alt="" />
+            <div className={style.loading}>
+              <span>🌀</span>
+            </div>
             <div className={style.previewFileDescription}>
               <p>GoldMine.jpg</p>
               <p className={style.previewFileSize}>1Мб</p>
