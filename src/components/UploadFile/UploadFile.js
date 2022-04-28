@@ -16,7 +16,7 @@ UploadFile.propTypes = {
 }
 
 UploadFile.defaultProps = {
-  maxFileSize: 1024 * 1024 * 1024 * 2,
+  maxFileSize: 2 * 1024 * 1024,
   label: "Перетащите сюда файл или выберите его",
   labelForMultiple: "Перетащите сюда файлы или выберите их",
   multiple: false,
@@ -48,6 +48,10 @@ function getBase64(file) {
   })
 }
 
+function formatSize(size) {
+  return (size / 1024 / 1024).toLocaleString("ru-RU") + "Мб"
+}
+
 export default function UploadFile({
   label,
   labelForMultiple,
@@ -62,8 +66,8 @@ export default function UploadFile({
   
   const [ files, setFiles ] = useState({})
   
-  const getFiles = () => {
-    return Object.keys(files).map(k => files[ k ]).sort((a, b) => sortFunc(a.file, b.file))
+  const getFiles = (fileCollection) => {
+    return Object.values(fileCollection).sort((a, b) => sortFunc(a.file, b.file))
   }
   
   const checkFileAlreadyExist = (fileName) => typeof files[ fileName ] !== "undefined"
@@ -71,10 +75,14 @@ export default function UploadFile({
   
   const updateFileList = (filePayload) => {
     setFiles((prev) => {
-      return {
+      const newState = {
         ...prev,
         [ filePayload.file.name ]: filePayload
       }
+  
+      onChange(getFiles(newState).map(d => d.file))
+      
+      return newState
     })
   }
   
@@ -96,13 +104,17 @@ export default function UploadFile({
       
       if (checkFileIsPreviewable(file.type)) {
         getBase64(file)
-          .then((fileAsBase64) => updateFileList({
-            file,
-            type: file.type,
-            imageUrl: fileAsBase64,
-            status: "OK",
-            isLoading: false
-          }))
+          .then((fileAsBase64) => {
+            setTimeout(() => {
+              updateFileList({
+                file,
+                type: file.type,
+                imageUrl: fileAsBase64,
+                status: "OK",
+                isLoading: false
+              })
+            }, 2000)
+          })
           .catch((error) => {
             onRejectFile(error)
             updateFileList({
@@ -133,6 +145,15 @@ export default function UploadFile({
     nativeEvent.preventDefault()
   }
   
+  const handleDeleteButtonClick = (filePayload) => {
+    setFiles((prev) => {
+      const copy = { ...prev }
+      delete copy[ filePayload.file.name ]
+      onChange(getFiles(copy).map(d => d.file))
+      return copy
+    })
+  }
+  
   return (
     <div className={style.root}>
       <label className={style.dropZone}
@@ -143,7 +164,7 @@ export default function UploadFile({
           <p className={style.inputFileLabel}>
             { multiple ? labelForMultiple : label }
           </p>
-          <p className={style.maxFileDescr}>Макс. размер файла: <strong>2Мб</strong></p>
+          <p className={style.maxFileDescr}>Макс. размер файла: <strong>{ formatSize(maxFileSize) }</strong></p>
         </div>
         
         <input className={style.inputFileInstance}
@@ -155,7 +176,7 @@ export default function UploadFile({
       <div className={style.previewFilesContainer}>
         <ul className={style.previewList}>
           {
-            getFiles().map((filePayload) => {
+            getFiles(files).map((filePayload) => {
               const isPreviewable = checkFileIsPreviewable(filePayload.file.type)
               return (
                 <li key={filePayload.file.name} className={cn(style.previewListItem, {
@@ -164,11 +185,12 @@ export default function UploadFile({
                 })}>
                   { isPreviewable && !filePayload.isLoading && <img src={ filePayload.imageUrl } /> }
                   { filePayload.isLoading && <div className={style.loading}><span>🌀</span></div> }
+                  { filePayload.status === "ERROR" && <div className={style.error}><span>⛔️</span></div> }
                   <div className={style.previewFileDescription}>
                     <p>{ filePayload.file.name }</p>
-                    <p className={style.previewFileSize}>1Мб</p>
+                    <p className={style.previewFileSize}>{ formatSize(filePayload.file.size) }</p>
                   </div>
-                  <button className={style.previewFileDeleteButton}>❌</button>
+                  <button className={style.previewFileDeleteButton} onClick={() => handleDeleteButtonClick(filePayload)}>❌</button>
                 </li>
               )
             })

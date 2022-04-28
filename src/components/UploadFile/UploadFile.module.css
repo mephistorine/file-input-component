@@ -123,6 +123,10 @@
   animation: rotation 1s linear infinite;
 }
 
+.error {
+  user-select: none;
+}
+
 @keyframes rotation {
   from {
     transform: rotate(0);
